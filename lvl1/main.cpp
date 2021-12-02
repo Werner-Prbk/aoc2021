@@ -3,23 +3,9 @@
 #include <fstream>
 #include <algorithm>
 #include <numeric>
+#include "../common/linereader.h"
 
 using namespace std;
-
-vector<int> readInput(string const& fileName)
-{
-    auto v = vector<int>();
-    auto in = std::ifstream(fileName);
-
-    while (!in.eof())
-    {
-        int num = 0;
-        in >> num;
-        v.push_back(num);
-    }
-
-    return v;
-}
 
 int getIncreasesWithSlidingWindow(vector<int> const& v, int const windowLen)
 {
@@ -39,7 +25,8 @@ int getIncreasesWithSlidingWindow(vector<int> const& v, int const windowLen)
 
 int main()
 {
-    auto v = readInput("input.txt");
+    vector<int> v{};
+    aoc::readInput("input.txt", [&v](auto const& s){ v.push_back(stoi(s)); });
 
     // part 1
     cout << "Result PART1: " << getIncreasesWithSlidingWindow(v, 1) << endl;
