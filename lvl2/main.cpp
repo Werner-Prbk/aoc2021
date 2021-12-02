@@ -5,7 +5,6 @@
 
 using namespace std;
 
-
 struct Command
 {
     Command(string str)
@@ -57,6 +56,25 @@ void ProcessCommand(Command const& c, Position& p)
     }
 }
 
+void ProcessCommandPart2(Command const& c, Position& pos, int& aim)
+{
+    switch (c.direction)
+    {
+        case Command::Direction::down: 
+            aim += c.units;
+            break;
+        case Command::Direction::up: 
+            aim -= c.units;
+            break;
+        case Command::Direction::forward:
+            pos.x += c.units;
+            pos.y += aim * c.units;
+            break;    
+        default:
+            throw "unexpected direction";
+    }
+}
+
 int main()
 {
     vector<Command> v;
@@ -69,7 +87,19 @@ int main()
         ProcessCommand(c, pos);
     }
 
+    cout << "Part 1 --------------" << endl;
     cout << "Position: " << pos.x << "/" << pos.y << endl;
     cout << "Result is: " << pos.x * pos.y << endl;
 
+
+    int aim = 0;
+    pos = Position();
+    for (auto &&c : v)
+    {
+        ProcessCommandPart2(c, pos, aim);
+    }
+
+    cout << "Part 2 --------------" << endl;
+    cout << "Position: " << pos.x << "/" << pos.y << endl;
+    cout << "Result is: " << pos.x * pos.y << endl;
 }
