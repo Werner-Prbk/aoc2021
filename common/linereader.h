@@ -3,5 +3,5 @@
 
 namespace aoc 
 {
-    bool readInput(std::string const& fileName, std::function<void(const std::string&)> lineProcessor);
+    void readInput(std::string const& fileName, std::function<void(const std::string&)> lineProcessor);
 }

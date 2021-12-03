@@ -1,17 +1,15 @@
 #include "linereader.h"
 #include <fstream>
 
-bool aoc::readInput(std::string const& fileName, std::function<void(const std::string&)> lineProcessor)
+void aoc::readInput(std::string const& fileName, std::function<void(const std::string&)> lineProcessor)
 {
     auto in = std::ifstream(fileName);
 
-    if (!in.is_open()) return false;
+    if (!in.is_open()) throw "failed to open file!";
 
     std::string line;
     while (std::getline(in, line))
     {
         lineProcessor(line);
     }
-
-    return true;
 }

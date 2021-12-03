@@ -1,6 +1,9 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <numeric>
+#include <functional>
+// #include <ranges> // no compiler support for now -.-
 #include "../common/linereader.h"
 
 using namespace std;
@@ -16,6 +19,56 @@ vector<bool> DecodeDiagnosticReport(string const& code)
         }
     }
     return v;
+}
+
+int BinaryToInt(vector<bool> bv)
+{
+    string s(bv.size(), '0');
+    transform(bv.begin(), bv.end(), s.begin(), [](auto b)
+    {
+        return b ? '1' : '0' ;
+    });
+
+    return stoi(s, 0, 2);
+}
+
+bool GetDominantBitValue(vector<bool> line, bool winningValue = true)
+{
+    auto ones = static_cast<size_t>(count_if(line.begin(), line.end(), [](auto b) { return b; }));
+    auto zeroes = line.size() - ones;
+    
+    if (ones == zeroes) 
+    {
+        return winningValue;
+    }
+    return (ones > zeroes);
+}
+
+vector<bool> FindMatchingWord(vector<vector<bool>> tt, bool matchingBit)
+{
+    for (size_t bitPos = 0; bitPos < tt.size(); ++bitPos)
+    {
+        auto dominantBit = GetDominantBitValue(tt[bitPos]) == matchingBit;
+
+        vector<int> idxToDelete;        
+        
+        for (size_t i = 0; i < tt[bitPos].size(); ++i)
+        {
+            if (tt[bitPos][i] != dominantBit)
+            {
+                idxToDelete.push_back(i);
+            }
+        }
+        
+        // delete columns
+        for_each(idxToDelete.rbegin(), idxToDelete.rend(),[&tt](auto i){
+            for_each(tt.begin(), tt.end(), [i](auto & line) { line.erase(line.begin() + i); });
+        });
+    }
+
+    vector<bool> res;
+    for_each(tt.begin(), tt.end(),[&res](auto const& v){ res.push_back(v[0]); });
+    return res;
 }
 
 int main()
@@ -34,37 +87,33 @@ int main()
         }        
     });
 
-    auto const bitWidth = transformedTable.size();
+    auto const wordWidth = transformedTable.size();
+    vector<bool> gammaRateWord(wordWidth, false);
+    vector<bool> epsilonWord(wordWidth, false);
 
-    string gammaRateBin(bitWidth, '0');
-    string epsilonBin(bitWidth, '0');
-
-    for (size_t bitPos = 0; bitPos < bitWidth; ++bitPos)
+    for (size_t bitPos = 0; bitPos < wordWidth; ++bitPos)
     {
-        auto ones = static_cast<size_t>(count_if(transformedTable[bitPos].begin(), transformedTable[bitPos].end(), [](auto b) { return b; }));
-        auto zeroes = transformedTable[0].size() - ones;
-
-        if (ones > zeroes)
-        {
-            gammaRateBin[bitPos] = '1';
-        }
-        else if (ones < zeroes)
-        {
-            epsilonBin[bitPos] = '1';
-        }
-        else
-        {
-            throw "Undefined!";
-        }
+        gammaRateWord[bitPos] = GetDominantBitValue(transformedTable[bitPos]);
+        epsilonWord[bitPos] = !gammaRateWord[bitPos];
     }
-    
-    auto gammaRateValue = stoi(gammaRateBin, 0, 2);
-    auto epsilonValue = stoi(epsilonBin, 0, 2);
 
-    cout << "GammaRate: " << gammaRateBin << " --> " << gammaRateValue << endl;
-    cout << "Epsilon:   " << epsilonBin << " --> " << epsilonValue << endl;
+    auto gammaRateValue = BinaryToInt(gammaRateWord);
+    auto epsilonValue = BinaryToInt(epsilonWord);
 
+    cout << "PART 1 ------------" << endl;
+    cout << "GammaRate: " << gammaRateValue << endl;
+    cout << "Epsilon:   " << epsilonValue << endl;
     cout << "Power consumption: " << gammaRateValue * epsilonValue << endl; 
+    
+    auto oxyWord = FindMatchingWord(transformedTable, true);
+    auto co2Word = FindMatchingWord(transformedTable, false);
+    auto oxyValue = BinaryToInt(oxyWord);
+    auto co2Value = BinaryToInt(co2Word);
+
+    cout << "PART 2 ------------" << endl;
+    cout << "OxygenGeneratorRating: " << oxyValue << endl;
+    cout << "Co2ScrubberRating::   " << co2Value << endl;
+    cout << "Life support rating: " << oxyValue * co2Value << endl; 
 
     return 0;
 }
