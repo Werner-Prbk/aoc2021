@@ -100,6 +100,23 @@ vector<int> Split(string const& s, char const sep)
     return v;
 }
 
+template<size_t N>
+int PlayGamePart1(vector<int> const& numbers, vector<Board<N>> boards)
+{
+    for (auto n : numbers)
+    {
+        for (auto &b : boards)
+        {
+            b.MarkIf(n);
+            if (b.HasWon())
+            {
+                return b.GetScore();
+            }
+        }
+    }
+    throw "Unexpected: No winner found.";
+}
+
 int main() 
 {
     vector<int> numbers;
@@ -135,22 +152,10 @@ int main()
         }
     });
 
-    bool winnerFound = false;
-    for (auto n : numbers)
-    {
-        for (auto &b : boards)
-        {
-            b.MarkIf(n);
-            if (b.HasWon())
-            {
-                cout << "Winning score: " << b.GetScore() << endl;
-                winnerFound = true;
-                break;
-            }
-        }
+    // Part 1
+    auto result = PlayGamePart1(numbers, boards);
+    cout << "Winning score (part 1): " << result << endl;
 
-        if (winnerFound) break;
-    }
 
     return 0;
 }
