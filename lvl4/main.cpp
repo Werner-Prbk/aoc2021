@@ -35,8 +35,10 @@ public:
         get<0>(_board[row][col]) = num;
     }
 
-    void MarkIf(int num)
+    // returns true if this was the winning call
+    bool MarkIf(int num)
     {
+        bool wasWinningCall = false;
         for (auto &&row : _board) 
         {
             for (auto &&field : row) 
@@ -44,11 +46,18 @@ public:
                 if (get<0>(field) == num) 
                 {
                     get<1>(field) = true;
+                    
+                    if (!_hasWon && CheckIfAnyColOrRowIsFull())
+                    {
+                        _hasWon = true;
+                        wasWinningCall = true;
+                    }
                 }
             }
         }
 
         _lastNum = num;
+        return wasWinningCall;
     }
     
     int GetScore() const {
@@ -60,29 +69,44 @@ public:
                 score += get<1>(field) ? 0 : get<0>(field);     
             }
         }
-        
         return score * _lastNum;
     }
 
     bool HasWon() const
     {
-        return any_of(_board.begin(), _board.end(), [](auto const& row) 
-        {
-            return all_of(row.begin(), row.end(), [](auto const& field) 
-            { 
-                return get<1>(field);
-            });
-        });
+        return _hasWon;
     }
 
 private:
     using tField = std::tuple<int, bool>;     
+
+    bool CheckIfAnyColOrRowIsFull() const
+    {
+        array<int, N> sumCols {0};
+        array<int, N> sumRows {0};
+
+        for (size_t row = 0; row < N; ++row)
+        {
+            for (size_t col = 0; col < N; ++col)
+            {
+                if (get<1>(_board[row][col]))
+                {
+                    sumCols[row]++;
+                    sumRows[col]++;
+                }
+            }
+        }
+
+        return any_of(sumCols.begin(), sumCols.end(), [](auto const& s){ return s == N; }) ||
+            any_of(sumRows.begin(), sumRows.end(), [](auto const& s){ return s == N; });
+    }
 
     array<array<tField, N>, N> _board;
     int _lastNum {};
 
     size_t _fillRow;
     size_t _fillCol;
+    bool _hasWon;
 };
 
 vector<int> Split(string const& s, char const sep)
@@ -107,14 +131,30 @@ int PlayGamePart1(vector<int> const& numbers, vector<Board<N>> boards)
     {
         for (auto &b : boards)
         {
-            b.MarkIf(n);
-            if (b.HasWon())
+            if (b.MarkIf(n))
             {
                 return b.GetScore();
             }
         }
     }
     throw "Unexpected: No winner found.";
+}
+
+template<size_t N>
+int PlayGamePart2(vector<int> const& numbers, vector<Board<N>> boards)
+{
+    int notYetWon = boards.size();
+    for (auto n : numbers)
+    {
+        for (auto &b : boards)
+        {
+            if (b.MarkIf(n)) 
+            {
+                if (--notYetWon == 0) return b.GetScore();
+            }
+        }
+    }
+    throw "Unexpected: Not all boards were winning.";
 }
 
 int main() 
@@ -156,6 +196,9 @@ int main()
     auto result = PlayGamePart1(numbers, boards);
     cout << "Winning score (part 1): " << result << endl;
 
+    // Part 2
+    auto result2 = PlayGamePart2(numbers, boards);
+    cout << "Score (part 2): " << result2 << endl;
 
     return 0;
 }
