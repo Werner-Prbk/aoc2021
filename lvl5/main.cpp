@@ -17,7 +17,8 @@ struct Coordinate {
     int y;
 };
 
-struct Line {
+class Line {
+public:
     Line(Coordinate startinit = Coordinate(), Coordinate endinit = Coordinate()) 
         : start{startinit}, end{endinit}
         {}
@@ -30,49 +31,33 @@ struct Line {
         return max(start.y, end.y);
     }
 
-    vector<Coordinate> GetPath() const {
+    vector<Coordinate> GetPath(bool skipDiagonales = false) const {
         vector<Coordinate> path;
 
-        if (end.x == start.x)
+        auto direction = [](int const diff) {
+            if (diff < 0) return -1;
+            if (diff > 0) return 1;
+            return 0;
+        };
+
+        auto incX = direction(end.x - start.x);
+        auto incY = direction(end.y - start.y);
+
+        if (skipDiagonales && (incX != 0) && (incY != 0))
         {
-            auto const from = min(start.y, end.y);
-            auto const to = max(start.y, end.y);
-            
-            for (int i = from; i <= to; ++i)
-            {
-                path.push_back({start.x, i});
-            }
-        }
-        else if (end.y == start.y)
+            return path;
+        } 
+
+        Coordinate tmp(start);
+
+        while ((tmp.x != end.x) || (tmp.y != end.y))
         {
-            auto const from = min(start.x, end.x);
-            auto const to = max(start.x, end.x);
-            
-            for (int i = from; i <= to; ++i)
-            {
-                path.push_back({i, start.y});
-            }
-        }
-        else 
-        {
-            auto const dx = end.x - start.x;
-            auto const dy = end.y - start.y;
-
-            auto incX = dx > 0 ? 1 : -1;
-            auto incY = dy > 0 ? 1 : -1;
-
-            Coordinate tmp(start);
-
-            while (tmp.x != end.x)
-            {
-                path.push_back(tmp);
-                tmp.x += incX;
-                tmp.y += incY;
-            }
-
-            path.push_back(end);
+            path.push_back(tmp);
+            tmp.x += incX;
+            tmp.y += incY;
         }
 
+        path.push_back(end); 
         return path;
     }
 
@@ -109,12 +94,14 @@ Line ParseLine(string const& l)
 vector<vector<int>> BuildEmptyDiagram(vector<Line> const& lines)
 {
     vector<vector<int>> diagram {0};
+    
     int xmax = max_element(lines.begin(), lines.end(), [](auto const& lhs, auto const& rhs) {
-        return lhs.GetMaxX() < rhs.GetMaxX();
-    })->GetMaxX();
+            return lhs.GetMaxX() < rhs.GetMaxX();
+        })->GetMaxX();
+
     int ymax = max_element(lines.begin(), lines.end(), [](auto const& lhs, auto const& rhs) {
-        return lhs.GetMaxY() < rhs.GetMaxY();
-    })->GetMaxY();
+            return lhs.GetMaxY() < rhs.GetMaxY();
+        })->GetMaxY();
 
     // dont foget the interval is [0, max]
     for (int rows = 0; rows <= ymax; ++rows)
@@ -131,11 +118,13 @@ int main() {
         lines.push_back(ParseLine(l));
     });
 
+
+    // Part 1
     auto diag = BuildEmptyDiagram(lines);
 
     for (auto &&l : lines)
     {
-        for (auto &&c : l.GetPath())
+        for (auto &&c : l.GetPath(true))
         {
             diag[c.y][c.x]++;
         }
@@ -153,7 +142,32 @@ int main() {
         }
     }
     
-    cout << "Overlapping lines: " << overlaps << endl;
+    cout << "Overlapping lines (ignore diagonales): " << overlaps << endl;
+
+    // Part 2
+    diag = BuildEmptyDiagram(lines);
+
+    for (auto &&l : lines)
+    {
+        for (auto &&c : l.GetPath(false))
+        {
+            diag[c.y][c.x]++;
+        }
+    }
+    
+    overlaps = 0;
+    for (auto &&cols : diag)
+    {
+        for (auto &&elem : cols)
+        {
+            if (elem > 1)
+            {
+                overlaps++;
+            }
+        }
+    }
+    
+    cout << "Overlapping lines (with diagonales): " << overlaps << endl;
 
     return 0;
 }
