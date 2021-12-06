@@ -28,16 +28,14 @@ void simulateDay(vector<int>& v, int normalFishTime, int const newFishTime)
 template <typename T, size_t N>
 void simulateDayEfficient(std::array<T, N>& arr, int const normalFishTime)
 {
-    auto newArr = arr;
+    auto forking = arr[0];
     for (size_t i = 0; i < (N - 1); ++i)
     {
-        newArr[i] = arr[i + 1];
+        arr[i] = arr[i + 1];
     }
 
-    newArr[N - 1] = arr[0];
-    newArr[normalFishTime] += arr[0];
-
-    arr = newArr;
+    arr[N - 1] = forking;
+    arr[normalFishTime] += forking;
 }
 
 int main(){
