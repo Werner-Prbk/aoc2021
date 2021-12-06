@@ -109,20 +109,7 @@ private:
     bool _hasWon;
 };
 
-vector<int> Split(string const& s, char const sep)
-{
-    vector<int> v;
-    size_t start = s.find_first_not_of(sep); // skip leading sep;
-    size_t end = 0;
-    
-    do {
-        end = s.find_first_of(sep, start);
-        v.push_back(stoi(s.substr(start, end)));
-        start = s.find_first_not_of(sep, end); // skip all sep
-    } while (end != string::npos);
 
-    return v;
-}
 
 template<size_t N>
 int PlayGamePart1(vector<int> const& numbers, vector<Board<N>> boards)
@@ -169,7 +156,7 @@ int main()
         if (isFirstLine) 
         {
             isFirstLine = false;
-            numbers = Split(line, ',');
+            numbers = aoc::splitString(line, ',');
             return;
         }
 
@@ -184,7 +171,7 @@ int main()
         }
         else
         {
-            auto fields = Split(line, ' ');
+            auto fields = aoc::splitString(line, ' ');
             for (auto &&i : fields) 
             { 
                 boards.rbegin()->Fill(i); 
