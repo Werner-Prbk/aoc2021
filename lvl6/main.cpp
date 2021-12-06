@@ -1,11 +1,14 @@
 #include <iostream>
 #include <vector>
+#include <algorithm>
+#include <numeric>
+
 #include "../common/linereader.h"
 
 using namespace std;
 
-
-void simulateDay(vector<int>& v, int normalFishTime, int newFishTime)
+// the lazy way
+void simulateDay(vector<int>& v, int normalFishTime, int const newFishTime)
 {
     auto cnt = v.size();
     for (size_t i = 0; i < cnt; ++i)
@@ -22,19 +25,56 @@ void simulateDay(vector<int>& v, int normalFishTime, int newFishTime)
     }
 }
 
+template <typename T, size_t N>
+void simulateDayEfficient(std::array<T, N>& arr, int const normalFishTime)
+{
+    auto newArr = arr;
+    for (size_t i = 0; i < (N - 1); ++i)
+    {
+        newArr[i] = arr[i + 1];
+    }
+
+    newArr[N - 1] = arr[0];
+    newArr[normalFishTime] += arr[0];
+
+    arr = newArr;
+}
+
 int main(){
 
     vector<int> fishtimer;
 
     aoc::readInput("input.txt", [&fishtimer](auto const& line) { fishtimer = aoc::splitString(line, ','); });
 
-    auto totalDays = 80;
-    for (int d = 0; d < totalDays; ++d)
+    std::array<uint64_t, 9> timerCounter {};
+
+    // initialize
+    for (auto &&i : fishtimer)
     {
-        simulateDay(fishtimer, 6, 8);
+        timerCounter[i]++;
     }
 
-    cout << "fishes after " << totalDays << " days: " << fishtimer.size() << endl;
+    auto part1Days = 80;
+    auto totalDays = 256;
+    auto day = 0;
+
+    // Part 1
+    for (; day < part1Days; ++day)
+    {
+        simulateDayEfficient(timerCounter, 6);
+    }
+
+    cout << "fishes after " << totalDays << " days: " << 
+        std::accumulate(timerCounter.begin(), timerCounter.end(), 0) << endl;
+
+    // Part 2
+    for (; day < totalDays; ++day)
+    {
+        simulateDayEfficient(timerCounter, 6);
+    }
+
+    cout << "fishes after " << totalDays << " days: " << 
+        std::accumulate(timerCounter.begin(), timerCounter.end(), (uint64_t)0) << endl;
 
     return 0;
 }
