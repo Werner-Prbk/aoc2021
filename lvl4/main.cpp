@@ -1,7 +1,7 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
-#include "../common/linereader.h"
+#include "../common/aoc.h"
 
 using namespace std;
 

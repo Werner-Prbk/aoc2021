@@ -2,7 +2,7 @@
 #include <vector>
 #include <algorithm>
 #include <string>
-#include "../common/linereader.h"
+#include "../common/aoc.h"
 
 using namespace std;
 using namespace aoc;

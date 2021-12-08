@@ -4,7 +4,7 @@
 #include <numeric>
 #include <functional>
 // #include <ranges> // no compiler support for now -.-
-#include "../common/linereader.h"
+#include "../common/aoc.h"
 
 using namespace std;
 

@@ -3,7 +3,7 @@
 #include <vector>
 #include <numeric>
 #include <limits>
-#include "../common/linereader.h"
+#include "../common/aoc.h"
 
 using namespace std;
 

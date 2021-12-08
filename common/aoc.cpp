@@ -1,4 +1,4 @@
-#include "linereader.h"
+#include "aoc.h"
 #include <fstream>
 #include <functional>
 #include <algorithm>

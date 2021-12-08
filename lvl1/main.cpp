@@ -3,7 +3,7 @@
 #include <fstream>
 #include <algorithm>
 #include <numeric>
-#include "../common/linereader.h"
+#include "../common/aoc.h"
 
 using namespace std;
 

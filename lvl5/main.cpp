@@ -4,7 +4,7 @@
 #include <sstream>
 #include <numeric>
 #include <locale>
-#include "../common/linereader.h"
+#include "../common/aoc.h"
 
 using namespace std;
 
