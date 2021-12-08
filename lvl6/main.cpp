@@ -42,7 +42,7 @@ int main(){
 
     vector<int> fishtimer;
 
-    aoc::readInput("input.txt", [&fishtimer](auto const& line) { fishtimer = aoc::splitString(line, ','); });
+    aoc::readInput("input.txt", [&fishtimer](auto const& line) { fishtimer = aoc::splitString<int>(line, ','); });
 
     std::array<uint64_t, 9> timerCounter {};
 

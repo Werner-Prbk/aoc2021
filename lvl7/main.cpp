@@ -22,7 +22,7 @@ int calcFuelPart2(int distance)
 
 int main(){
     vector<int> crabPositions;
-    aoc::readInput("input.txt", [&crabPositions](auto const& line){crabPositions = aoc::splitString(line, ',');});
+    aoc::readInput("input.txt", [&crabPositions](auto const& line){crabPositions = aoc::splitString<int>(line, ',');});
 
     auto from = min_element(crabPositions.begin(), crabPositions.end());
     auto to = max_element(crabPositions.begin(), crabPositions.end());

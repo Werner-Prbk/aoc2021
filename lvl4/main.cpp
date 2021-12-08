@@ -156,7 +156,7 @@ int main()
         if (isFirstLine) 
         {
             isFirstLine = false;
-            numbers = aoc::splitString(line, ',');
+            numbers = aoc::splitString<int>(line, ',');
             return;
         }
 
@@ -171,7 +171,7 @@ int main()
         }
         else
         {
-            auto fields = aoc::splitString(line, ' ');
+            auto fields = aoc::splitString<int>(line, ' ');
             for (auto &&i : fields) 
             { 
                 boards.rbegin()->Fill(i); 
