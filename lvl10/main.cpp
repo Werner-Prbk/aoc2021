@@ -13,10 +13,6 @@ bool isOpening(char c) {
     return c == '(' || c == '[' || c == '{' || c == '<';
 }
 
-bool isClosing(char c) {
-    return c == ')' || c == ']' || c == '}' || c == '>';
-}
-
 char getMatchingClosing(char c) {
     switch (c) {
         case '(': return ')';
