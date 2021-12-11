@@ -88,12 +88,26 @@ int main() {
 
     int totalSteps = 100;
     int flashes = 0;
-    for (int i = 0; i < totalSteps; ++i) {
+    bool part2Solved = false;
+
+    for (int i = 1; (i <= totalSteps) || !part2Solved; ++i) {
+        
+        bool notAllFlashed = false;
         simulateStep(octopusEnergy);
-        iterateOverOctopus(octopusEnergy, [&flashes](auto& oe, int r, int c) { if (oe[r][c].hasFlashed) flashes++; });       
+        iterateOverOctopus(octopusEnergy, [&flashes, &notAllFlashed](auto& oe, int r, int c) { 
+            if (oe[r][c].hasFlashed) flashes++;
+            else notAllFlashed = true;
+        });  
+
+        if (i == totalSteps) {
+            cout << "Total flashes afer " << totalSteps << " steps: " << flashes << endl;
+        }
+
+        if (!notAllFlashed){
+            part2Solved = true;
+            cout << "All flashed in interation " << i << endl;
+        }
     }
-    
-    cout << "Total flashes afer " << totalSteps << " steps: " << flashes << endl;
 
     return 0;
 }
