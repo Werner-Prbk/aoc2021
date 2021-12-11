@@ -58,15 +58,6 @@ void flashLights(vector<vector<Octopus>> &oe) {
     } while (repeat);
 }
 
-void print(vector<vector<Octopus>>& octopusEnergy) {
-    for (size_t r = 0; r < octopusEnergy.size(); ++r) {
-        for (size_t c = 0; c < octopusEnergy[0].size(); ++c) {
-            cout << octopusEnergy[r][c].energy << " ";
-        }
-        cout << endl;
-    }
-}
-
 void simulateStep(vector<vector<Octopus>> &oe) {
     iterateOverOctopus(oe, [](auto& o, int r, int c) { o[r][c].hasFlashed = false; });
     increaseEnergy(oe);
