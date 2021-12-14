@@ -1,7 +1,6 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
-#include <map>
 #include <locale>
 #include <memory>
 #include "../common/aoc.h"
@@ -17,30 +16,47 @@ struct Node {
     string nodeName {};
     int visitCounter {0};
 
-    bool CanBeVisited() {
-        if (isSmallCave && visitCounter < (1 + *bonus)) return true;
+    bool CanBeVisited() const {
+        auto limit = 1;
+
+        if (useBonusSystem && *bonus) {
+            limit++;
+        }
+
+        if (isSmallCave && visitCounter < limit) return true;
         return !isSmallCave && !isStart;
     }
 
     bool Visit() {
         visitCounter++;
 
-        if (isSmallCave && (visitCounter > 1) && (*bonus == 1)) {
-            (*bonus) = 0;
-            bonusTaken = true;
+        if (isSmallCave && (visitCounter > 1)) {
+            if (useBonusSystem && (*bonus)) {
+                (*bonus) = false;
+                bonusTaken = true;
+            }
         }
 
         return isEnd;
+    }
+
+    bool Unvisit() {
+        if(useBonusSystem && bonusTaken) {
+            bonusTaken = false;
+            *bonus = true;
+        }
+
+        visitCounter--;
+        return visitCounter == 0;
     }
 
     void Reset() {
         visitCounter = 0;
     }
 
-    bool bonusTaken {false};
-    int* bonus;
-    void SetBonus(int& val) {
-        bonus  = &val;
+    void SetBonus(bool* val) {
+        bonus  = val;
+        useBonusSystem = true;
     }
 
     static Node CreateNode(string const& n) {
@@ -58,53 +74,37 @@ struct Node {
     }
 
     void UpdateEdges(shared_ptr<Node> from, shared_ptr<Node> to) {
-        //cout << "'" << nodeName << "' " << "'" << from.nodeName << "' " << to.nodeName << "'" << endl;  
-
         if (from->nodeName == nodeName) {
-            cout << "connect:" << nodeName << " with " << to->nodeName << endl;
             connectedNodes.push_back(to);
-            cout << "XXXX" <<(*connectedNodes.rbegin())->nodeName << endl;
         } else if (to->nodeName == nodeName) {
-            cout << "connect:" << nodeName << " with " << from->nodeName << endl;
             connectedNodes.push_back(from);
-        } else
-        {
-            cout << "no connection:" << nodeName << " with " << from->nodeName << " and " << to->nodeName << endl; 
         }
     }
+
+private:
+    Node(){}
+
+    bool useBonusSystem {false};
+    bool bonusTaken {false};
+    bool* bonus;
 };
 
-void FindPath(shared_ptr<Node> n, string s, int* bonus) {
+void FindPath(shared_ptr<Node> n) {
     if (n->CanBeVisited()) {
-        s += "," + n->nodeName;
         if (!n->Visit()) {
-            for_each(n->connectedNodes.begin(), n->connectedNodes.end(), [&s, bonus](auto const& nd) {
-                FindPath(nd, s, bonus);                
-                });
-            n->Reset();    
-            // give it back
-                    if (n->bonusTaken)
-                    {
-                        *bonus = 1;
-                        n->bonusTaken = false;
-                    } 
-        }
-        else {
-            cout << s << endl;
-            
+            for_each(n->connectedNodes.begin(), n->connectedNodes.end(), [](auto const& nd) { FindPath(nd); });  
+            n->Unvisit();
         }
     }
-    
 }
 
-vector<shared_ptr<Node>>::iterator GetNodeByName(vector<shared_ptr<Node>>& nodes, string const& name)
-{
+vector<shared_ptr<Node>>::iterator GetNodeByName(vector<shared_ptr<Node>>& nodes, string const& name) {
     return find_if(nodes.begin(), nodes.end(), [&name](auto const& node) {return name == node->nodeName;});
 }
 
 int main() {
     vector<shared_ptr<Node>> nodes;
-    readInput("test_0.txt", [&nodes](auto const& line) {
+    readInput("input.txt", [&nodes](auto const& line) {
         auto path = splitString<string>(line, '-');        
         for_each(path.begin(), path.end(), [&nodes](auto const& n){
             if (GetNodeByName(nodes, n) == nodes.end()) {
@@ -117,28 +117,18 @@ int main() {
         }
     });   
 
-    for (auto &&node : nodes)
-    {
-        cout << node->nodeName <<  "(" << node->connectedNodes.size() << ")" <<": ";
-        for (auto &&c : node->connectedNodes)
-        {
-            cout << " '" << c->nodeName << "' ";
-        }
-        cout << endl;     
-    }
-
     auto startNode = *GetNodeByName(nodes, "start");
     auto endNode = *GetNodeByName(nodes, "end");
 
     int sum = 0;
     for (auto &&s : startNode->connectedNodes)
     {
-        int bonus = 0;
+        // for part 2
+        bool bonusSystem = true;
 
-        for_each(nodes.begin(), nodes.end(), [&bonus](auto& node) {node->Reset(); node->SetBonus(bonus);});
-        FindPath(s, "start", &bonus);
+        for_each(nodes.begin(), nodes.end(), [&bonusSystem](auto& node) {node->Reset(); node->SetBonus(&bonusSystem);});
+        FindPath(s);
         sum += endNode->visitCounter;
-        cout << endl;
     }
     
     cout << "Sum: " << sum << endl;
