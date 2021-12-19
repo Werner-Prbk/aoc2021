@@ -2,20 +2,13 @@
 #include <vector>
 #include <tuple>
 #include <algorithm>
+#include <set>
 #define DEBUG
 #include <cassert>
 #include "../common/aoc.h"
 
 using namespace std;
 using namespace aoc;
-
-pair<int, int> parseRange(string const& str, string const& dim) {
-    auto start = str.find(dim);
-    auto end = str.find(",", start);
-    auto part = str.substr(start+2, end-start);
-    auto fromto = splitString<int>(part, '.');
-    return {fromto[0], fromto[1]};
-}
 
 struct rectangle {
     rectangle(rectangle r1, rectangle r2) {
@@ -39,11 +32,11 @@ struct rectangle {
     int ystart;
     int yend;
 
-    bool is_within_rectangle(pair<int,int> pos) {
+    bool is_within_rectangle(pair<int,int> pos) const {
         return is_within_rectangle(pos.first, pos.second);
     }
 
-    bool is_within_rectangle(int x, int y) {
+    bool is_within_rectangle(int x, int y) const {
         if (x < xstart) return false;
         if (x > xend) return false;
         if (y < ystart) return false;
@@ -51,52 +44,6 @@ struct rectangle {
         return true;       
     }
 };
-
-void plot(rectangle area, rectangle target, vector<pair<int,int>> positions) {
-    for (int y = area.yend; y >= area.ystart; y--) {
-        for (int x = area.xstart; x <= area.xend; x++) {
-            if (y == x && x == 0) cout << "S";
-            else if (find(positions.begin(), positions.end(), pair<int,int>{x,y}) != positions.end()) {
-                cout << "#";
-            }
-            else if (target.is_within_rectangle(x,y)) cout << "T";
-            else cout << ".";
-        }
-        cout << endl;
-    }
-}
-
-void test_is_within_rectangle() {
-    auto t1 = rectangle({10, 20}, {10, 20});
-    assert(t1.is_within_rectangle(10, 10));
-    assert(t1.is_within_rectangle(20, 20));
-    assert(!t1.is_within_rectangle(21, 20));
-
-    t1 = rectangle({-10, -20}, {10, 20});
-    assert(t1.is_within_rectangle(-10, 10));
-    assert(t1.is_within_rectangle(-20, 20));
-    assert(!t1.is_within_rectangle(-20, 21));
-
-    t1 = rectangle({-10, -20}, {-10, -20});
-    assert(t1.is_within_rectangle(-10, -10));
-    assert(t1.is_within_rectangle(-20, -20));
-    assert(!t1.is_within_rectangle(-20, -1));
-
-    t1 = rectangle({10, 20}, {-10, -20});
-    assert(t1.is_within_rectangle(10, -10));
-    assert(t1.is_within_rectangle(20, -20));
-    assert(!t1.is_within_rectangle(1, -20));
-
-    t1 = rectangle({-10, 10}, {-10, 10});
-    assert(t1.is_within_rectangle(0, 0));
-    assert(t1.is_within_rectangle(0, 0));
-    assert(!t1.is_within_rectangle(11, 0));
-    assert(!t1.is_within_rectangle(0, 11));
-    assert(!t1.is_within_rectangle(0, -11));
-    assert(!t1.is_within_rectangle(-11, 0));
-    assert(!t1.is_within_rectangle(-11, -11));
-    assert(!t1.is_within_rectangle(11, 11));
-}
 
 struct probe {
     pair<int,int> velocity;
@@ -116,11 +63,7 @@ struct probe {
         latestPos.second += velocity.second;
         velocity.second -= 1;
 
-        //cout << "New velo: " << velocity.first << ", " << velocity.second << endl;
-        //cout << "New posi:" << latestPos.first << ", " << latestPos.second << endl; 
-
         positions.push_back(latestPos);
-
         return latestPos;
     }
 
@@ -139,22 +82,69 @@ struct probe {
     }
 };
 
-int main() {
-    test_is_within_rectangle();
+void plot(rectangle area, rectangle target, vector<pair<int,int>> positions) {
+    for (int y = area.yend; y >= area.ystart; y--) {
+        for (int x = area.xstart; x <= area.xend; x++) {
+            if (y == x && x == 0) cout << "S";
+            else if (find(positions.begin(), positions.end(), pair<int,int>{x,y}) != positions.end()) {
+                cout << "#";
+            }
+            else if (target.is_within_rectangle(x,y)) cout << "T";
+            else cout << ".";
+        }
+        cout << endl;
+    }
+}
 
+pair<int, int> parseRange(string const& str, string const& dim) {
+    auto start = str.find(dim);
+    auto end = str.find(",", start);
+    auto part = str.substr(start+2, end-start);
+    auto fromto = splitString<int>(part, '.');
+    return {fromto[0], fromto[1]};
+}
+
+bool is_overshooted(rectangle const& t, pair<int,int> pos) {
+    assert(t.xstart >= 0);  // assumption, that target is on the right hand side!
+    if (pos.second < t.ystart) return true;
+    if (pos.first > t.xend) return true;
+    return false;
+}
+
+int find_highest_position(rectangle const& t, set<pair<int,int>>& distinctVelocities) {
+    int yMax = 0;
+
+    for (int vx = 1; vx <= t.xend; vx++) {
+        for (int vy = -abs(t.ystart); vy <= abs(t.ystart); ++vy) {
+            pair<int,int> pos;
+            pair<int,int> currentVelo {vx,vy};
+            probe p{currentVelo};
+            do {
+                pos = p.step();
+                if (t.is_within_rectangle(pos)){
+                    distinctVelocities.insert(currentVelo);
+                    auto m = max_element(p.positions.begin(), p.positions.end(), [](auto const& lhs, auto const& rhs) { return lhs.second < rhs.second;});
+                    yMax = max(yMax, m->second);
+                }
+            } while(!is_overshooted(t, pos));
+        }
+    }
+    return yMax;
+}
+
+int main() {
     pair<int, int> x;
     pair<int, int> y;
-    readInput("test.txt", [&x,&y](auto const&l) {
+    readInput("input.txt", [&x,&y](auto const&l) {
         x = parseRange(l, "x");
         y = parseRange(l, "y");
     });
 
-//    auto target = rectangle(x,y);
-//    probe p{{7,2}};
-//    while (!target.is_within_rectangle(p.step()));
-//    plot(rectangle(target, p.get_area()), target, p.positions);
-
-
+    auto target = rectangle(x,y);
+    set<pair<int,int>> distinctVelo;
+    auto result = find_highest_position(target, distinctVelo);
+    cout << "Highest position (part 1): " << result << endl;
+    cout << "Distinct velocities (part 2): " << distinctVelo.size() << endl;
 
     return 0;
 }
