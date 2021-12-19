@@ -12,7 +12,6 @@ using namespace std;
 using namespace aoc;
 
 struct element;
-
 using elementPair = pair<shared_ptr<element>, shared_ptr<element>>;
 
 struct element
@@ -154,16 +153,16 @@ bool find_next_number(shared_ptr<element> current, shared_ptr<element> const tof
 }
 
 bool explode_numbers(shared_ptr<element> n, shared_ptr<element> root = nullptr) {
-    if (root == nullptr) root = n;
-    
-    if (n->isReal) return false;
+    if (root == nullptr) root = n; 
 
-    if (n->nestingLevel < 4){
+    if (n->isReal) {
+        return false;
+    }
+    else if (n->nestingLevel < 4) {
         if (explode_numbers(n->pair->first, root)) {
             return true;
-        } else {
-            return explode_numbers(n->pair->second, root);
-        }
+        } 
+        return explode_numbers(n->pair->second, root);
     }
     else {
         // left value is added to previous
@@ -176,13 +175,113 @@ bool explode_numbers(shared_ptr<element> n, shared_ptr<element> root = nullptr) 
         if (find_next_number(root, n, next)) {
             next->number += n->pair->second->number;
         }
-
         // the exploding pair is replaced with 0
         n->set(0);
         root->update_nesting_level();
-
         return true;
     }
+}
+
+bool split_numbers(shared_ptr<element> n) {
+    if (n->isReal) {
+        if (n->number >= 10) {
+            auto p = make_shared<elementPair>();
+            p->first = make_shared<element>(n->number / 2);
+            p->second = make_shared<element>((n->number + 1) / 2);
+            n->set(p);   
+            n->update_nesting_level(n->nestingLevel);
+            return true; 
+        }
+        return false;
+    }
+    else {
+        if (split_numbers(n->pair->first)) {
+            return true;
+        }
+        return split_numbers(n->pair->second);
+    }
+}
+
+shared_ptr<element> reduce_numbers(shared_ptr<element> n) {
+    bool repeat = true;   
+    while (repeat) {
+        repeat = false;
+        if (explode_numbers(n)) repeat = true;
+        else if (split_numbers(n)) repeat = true;
+    }
+    return n;
+}
+
+shared_ptr<element> concat_numbers(shared_ptr<element> lhs, shared_ptr<element> rhs) {
+    auto root = make_shared<element>(make_shared<elementPair>());
+    root->pair->first = lhs;
+    root->pair->second = rhs;
+    root->update_nesting_level();
+    return root;
+}
+
+shared_ptr<element> add_numbers(shared_ptr<element> lhs, shared_ptr<element> rhs) {
+    auto res = concat_numbers(lhs, rhs);
+    return reduce_numbers(res);
+}
+
+int calc_magnitude(shared_ptr<element> n) {
+    if (n->isReal) return n->number;
+    return 3 * calc_magnitude(n->pair->first) + 2 * calc_magnitude(n->pair->second);    
+}
+
+vector<shared_ptr<element>> getNumbers(string const& filename) {
+    vector<shared_ptr<element>> v;
+    readInput(filename, [&v](auto const& line) { v.push_back(parse_line(line)); });
+    return v;
+}
+
+// some testing
+void test_parsing();
+void test_concat_numbers();
+void test_find_prev_next();
+void test_explode();
+void test_split();
+void test_add();
+void test_calc_magnitude();
+
+int main()
+{
+    /*
+    // some testing
+    test_parsing();
+    test_concat_numbers();
+    test_find_prev_next();
+    test_explode();
+    test_split();
+    test_add();
+    test_calc_magnitude();
+    */
+    
+    // Part 1
+    auto numbers = getNumbers("input.txt");
+    shared_ptr<element> res = numbers[0];
+    for(size_t i = 1; i < numbers.size(); ++i) {
+        res = add_numbers(res, numbers[i]);
+    }
+    cout << "Resulting magnitued is: " << calc_magnitude(res) << endl; 
+
+    // Part 2
+    int highest = 0;
+    for (size_t i = 0; i < numbers.size(); ++i) {
+        for (size_t j = 0; j < numbers.size(); ++j) {
+            if (i == j) continue;
+            
+            // massive inefficient... but who cares!
+            auto v = getNumbers("input.txt");
+            auto mag = calc_magnitude(add_numbers(v[i], v[j]));
+            highest = max(mag, highest);
+       }
+    }
+
+    cout << "Highest magnitude (part 2): " << highest << endl;
+
+    return 0;
 }
 
 void test_explode() {
@@ -222,28 +321,6 @@ void test_explode() {
     assert(ss.str() == "[[3,[2,[8,0]]],[9,[5,[7,0]]]]");
 }
 
-bool split_numbers(shared_ptr<element> n) {
-    if (n->isReal) {
-        if (n->number >= 10) {
-            auto p = make_shared<elementPair>();
-            p->first = make_shared<element>(n->number / 2);
-            p->second = make_shared<element>((n->number + 1) / 2);
-            n->set(p);   
-            n->update_nesting_level(n->nestingLevel);
-            return true; 
-        }
-        return false;
-    }
-    else {
-        if (split_numbers(n->pair->first)) {
-            return true;
-        }
-        else {
-            return split_numbers(n->pair->second);
-        }
-    }
-}
-
 void test_split() {
     cout << "Split Test 1" << endl;
     auto t = parse_line("[[[[0,7],4],[15,[0,13]]],[1,1]]");
@@ -257,31 +334,6 @@ void test_split() {
     assert(ss.str() == "[[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]");
     assert(split_numbers(t) == false);
 
-}
-
-shared_ptr<element> reduce_numbers(shared_ptr<element> n) {
-    bool repeat = true;
-    
-    while (repeat) {
-        repeat = false;
-        if (explode_numbers(n)) repeat = true;
-        else if (split_numbers(n)) repeat = true;
-    }
-
-    return n;
-}
-
-shared_ptr<element> concat_numbers(shared_ptr<element> lhs, shared_ptr<element> rhs) {
-    auto root = make_shared<element>(make_shared<elementPair>());
-    root->pair->first = lhs;
-    root->pair->second = rhs;
-    root->update_nesting_level();
-    return root;
-}
-
-shared_ptr<element> add_numbers(shared_ptr<element> lhs, shared_ptr<element> rhs) {
-    auto res = concat_numbers(lhs, rhs);
-    return reduce_numbers(res);
 }
 
 void test_find_prev_next() {
@@ -381,7 +433,6 @@ void test_parsing()
     assert(r2->pair->second->pair->second->number == 3);
     assert(r2->pair->second->pair->second->nestingLevel == 2);
 
-
     cout << "Parse Test 3" << endl;
     string t3 = "[[10,20],30]";
     auto r3 = parse_line(t3);
@@ -405,61 +456,8 @@ void test_add() {
     assert(ss.str() == "[[[[0,7],4],[[7,8],[6,0]]],[8,1]]");
 }
 
-int calc_magnitude(shared_ptr<element> n) {
-    if (n->isReal) return n->number;
-    return 3 * calc_magnitude(n->pair->first) + 2 * calc_magnitude(n->pair->second);    
-}
-
 void test_calc_magnitude() {
-    cout << "Calc Magnitude Test1" << endl;
-
+    cout << "Calc Magnitude Test 1" << endl;
     auto t = parse_line("[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]");
     assert(calc_magnitude(t) == 3488);
-}
-
-vector<shared_ptr<element>> getNumbers(string const& filename) {
-    vector<shared_ptr<element>> v;
-    readInput(filename, [&v](auto const& line) { v.push_back(parse_line(line)); });
-    return v;
-}
-
-int main()
-{
-    /*
-    test_parsing();
-    test_concat_numbers();
-    test_find_prev_next();
-    test_explode();
-    test_split();
-    test_add();
-    test_calc_magnitude();
-    */
-    
-    auto numbers = getNumbers("input.txt");
-
-    shared_ptr<element> res = numbers[0];
-    for(size_t i = 1; i < numbers.size(); ++i) {
-        res = add_numbers(res, numbers[i]);
-    }
-
-    auto mag = calc_magnitude(res);   
-    cout << "Resulting magnitued is: " << mag << endl; 
-
-    // Part 2
-    int highest = 0;
-    for (size_t i = 0; i < numbers.size(); ++i) {
-        for (size_t j = 0; j < numbers.size(); ++j) {
-            if (i == j) continue;
-            
-            auto v = getNumbers("input.txt");
-
-            auto tmp = add_numbers(v[i], v[j]);
-            highest = max(calc_magnitude(tmp), highest);
-       }
-    }
-
-    cout << "Highest magnitude (part 2): " << highest << endl;
-    
-
-    return 0;
 }
