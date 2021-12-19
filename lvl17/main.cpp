@@ -14,7 +14,6 @@ struct rectangle {
     rectangle(rectangle r1, rectangle r2) {
         xstart = min(r1.xstart, r2.xstart);
         xend = max(r1.xend, r2.xend);
-
         ystart = min(r1.ystart, r2.ystart);
         yend = max(r1.yend, r2.yend);
     }
@@ -22,15 +21,9 @@ struct rectangle {
     rectangle(pair<int, int> x, pair<int, int> y) {
         xstart = min(x.first, x.second);        
         xend = max(x.first, x.second); 
-
         ystart = min(y.first, y.second);       
         yend = max(y.first, y.second);       
     }
-
-    int xstart;
-    int xend;
-    int ystart;
-    int yend;
 
     bool is_within_rectangle(pair<int,int> pos) const {
         return is_within_rectangle(pos.first, pos.second);
@@ -43,6 +36,11 @@ struct rectangle {
         if (y > yend) return false;
         return true;       
     }
+
+    int xstart;
+    int xend;
+    int ystart;
+    int yend;
 };
 
 struct probe {
@@ -70,11 +68,9 @@ struct probe {
     rectangle get_area() {
         pair<int,int> xrange {0,0};
         pair<int,int> yrange {0,0};
-        for (auto &&p : positions)
-        {
+        for (auto &&p : positions) {
             xrange.first = min(p.first, xrange.first);
             xrange.second = max(p.first, xrange.second);
-
             yrange.first = min(p.second, yrange.first);
             yrange.second = max(p.second, yrange.second);
         }
@@ -96,7 +92,7 @@ void plot(rectangle area, rectangle target, vector<pair<int,int>> positions) {
     }
 }
 
-pair<int, int> parseRange(string const& str, string const& dim) {
+pair<int, int> parse_range(string const& str, string const& dim) {
     auto start = str.find(dim);
     auto end = str.find(",", start);
     auto part = str.substr(start+2, end-start);
@@ -136,8 +132,8 @@ int main() {
     pair<int, int> x;
     pair<int, int> y;
     readInput("input.txt", [&x,&y](auto const&l) {
-        x = parseRange(l, "x");
-        y = parseRange(l, "y");
+        x = parse_range(l, "x");
+        y = parse_range(l, "y");
     });
 
     auto target = rectangle(x,y);
